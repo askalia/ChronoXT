@@ -25,13 +25,18 @@ jQuery(document).ready(function initChronoXT()
 			return false;
 		ChronoXT.inSearch.popup.emptyResults();
 		jQuery('#insearch-loader').fadeIn(500);
-		jQuery.get(ChronoXT.inSearch.SEARCH_URL+term, {}, function(html)
+		jQuery.get(ChronoXT.inSearch.SEARCH_URL+ ChronoXT.inSearch.slugify(term), {}, function(html, status, xhr)
 		{
 			jQuery('#insearch-loader').fadeOut(500);
-			ChronoXT.inSearch.popup.setResults(jQuery(html).find('#liste_articles'));
+			ChronoXT.inSearch.popup.setResults(jQuery(html).find('#liste_articles'), xhr);
 
 		});
 	}
+	ChronoXT.inSearch.slugify = function(val)
+	{
+		return val.trim().replace(/( |\+|\_)/g, '-');
+	}
+
 	/******************************************/
 
 	ChronoXT.inSearch.UI = {};
@@ -93,7 +98,7 @@ jQuery(document).ready(function initChronoXT()
 			});
 
 		jQuery('.insearch-results').remove();
-		ChronoXT.inSearch.popup.inSearchResults = jQuery('<div class="insearch-results"><p align="center"><i>Aucune recherche effectuée</i></p></div>')
+		ChronoXT.inSearch.popup.inSearchResults = jQuery('<div class="insearch-results"></div>')
 			.css({
 				'padding-left' : '20px',
 				'max-height' : '555px',
@@ -132,7 +137,14 @@ jQuery(document).ready(function initChronoXT()
 		jQuery(document).ajaxStop(onAjaxFinally);
 	};
 
-	ChronoXT.inSearch.popup.setResults = function(content) {
+	ChronoXT.inSearch.popup.setResults = function(content, xhr) 
+	{
+		console.log(content);
+		if (xhr.status !== 200 || content[0].childElementCount ==0 ){
+			ChronoXT.inSearch.popup.inSearchResults.html(ChronoXT.inSearch.popup.noResultTemplate());	
+			return;
+		}
+
 		ChronoXT.inSearch.popup.inSearchResults.html(content);
 		jQuery('li a, li img', '.insearch-results ').unbind();
 	};
@@ -158,7 +170,10 @@ jQuery(document).ready(function initChronoXT()
 		ChronoXT.inSearch.popup.inSearchResults.remove();
 		jQuery('#TB_overlay, #TB_window, #TB_ajaxContent').removeClass('db');
 	};
-
+	ChronoXT.inSearch.popup.noResultTemplate = function()
+	{	
+		return jQuery('<p align="center">Aucun résultat trouvé</p>').css({ 'font-size':'1.5em', 'font-style' : 'italic'});
+	}
 
 	return ChronoXT.inSearch.init();
 
